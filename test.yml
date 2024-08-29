@@ -1,0 +1,12 @@
+config:
+  # This is a test server run by team Artillery
+  # It's designed to be highly scalable
+  target: http://192.168.100.4
+  phases:
+    - duration: 100
+      arrivalRate: 2
+
+scenarios:
+  - flow:
+      - get:
+          url: '/'

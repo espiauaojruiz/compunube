@@ -1,0 +1,70 @@
+---
+- name: servuno
+  hosts: all
+  become: true
+  tasks:
+    - name: Actualizar cache APT
+      apt:
+        update_cache: yes
+
+    - name: Download HashiCorp GPG key
+      get_url:
+        url: https://apt.releases.hashicorp.com/gpg
+        dest: /tmp/hashicorp.gpg
+
+    - name: Add HashiCorp GPG key to keyring
+      command: gpg --dearmor /tmp/hashicorp.gpg
+      args:
+        creates: /tmp/hashicorp.gpg.gpg
+
+    - name: Move HashiCorp GPG key to keyrings directory
+      command: mv /tmp/hashicorp.gpg.gpg /usr/share/keyrings/hashicorp-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+    - name: Adicionar repositorio HashiCorp
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_lsb.codename }} main"
+        state: present
+
+    - name: Update APT package index
+      apt:
+        update_cache: yes
+
+    - name: Install Consul
+      apt:
+        name: consul
+        state: present
+
+    - name: Install nodejs and npm
+      apt:
+        name:
+          - nodejs
+          - npm
+        state: present
+
+    - name: Copiar archivo a /tmp
+      copy:
+        src: index.js
+        dest: /home/vagrant/index.js
+        mode: '0644'
+
+    - name: Instalar consul usando npm
+      command:
+        cmd: npm install consul
+        chdir: /home/vagrant
+
+    - name: Instalar express usando npm
+      command:
+        cmd: npm install express
+        chdir: /home/vagrant
+
+    - name: Start consul agent
+      shell: consul agent -ui -server -bootstrap-expect=2 -node=servuno -data-dir=/opt/consul -bind=192.168.100.2 -client=0.0.0.0 -retry-join="192.168.100.3" &
+      async: 120
+      poll: 0
+
+    - name: Start node service
+      shell: cd /home/vagrant/ && node index.js 3000 &
+      async: 120
+      poll: 0
