@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: getting-started-app-deployment
+spec:
+  selector:
+    matchLabels:
+      app: getting-started-app
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: getting-started-app
+    spec:
+     containers:
+     - name: getting-started-app
+       image: espiauaojruiz/getting-started-app:latest
+       imagePullPolicy: Always
+       ports:
+       - containerPort: 3000
